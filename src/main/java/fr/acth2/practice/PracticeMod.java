@@ -41,6 +41,7 @@ public class PracticeMod {
         System.out.println("ACTH2PRACTICE MOD STARTED");
     }
 
+    @SubscribeEvent
     private void onPlayerRightClick(PlayerInteractEvent.RightClickItem event) {
         Item item = event.getItemStack().getItem();
 
