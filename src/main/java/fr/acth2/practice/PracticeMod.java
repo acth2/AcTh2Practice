@@ -31,6 +31,7 @@ public class PracticeMod {
     private static final BlockPos SPAWN_POS = new BlockPos(0, 100, 0);
 
     public PracticeMod() {
+        NeoForge.EVENT_BUS.register(this);
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
         arenas.add(new Arena("Arena1", new BlockPos(1000, 100, 1000), new BlockPos(1010, 100, 1010)));
         arenas.add(new Arena("Arena2", new BlockPos(1100, 100, 1100), new BlockPos(1110, 100, 1110)));
