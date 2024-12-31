@@ -10,9 +10,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerLifecycleEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -33,28 +37,31 @@ public class PracticeMod {
     }
 
     @SubscribeEvent
-    private void onServerStarting(ServerLifecycleEvent server) {
-        server.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if (!player.getInventory().contains(new ItemStack(Items.COMPASS))) {
-                player.getInventory().add(new ItemStack(Items.COMPASS));
-            }
-        });
+    private void onServerStarting(ServerStartingEvent server) {
+        System.out.println("ACTH2PRACTICE MOD STARTED");
     }
 
-    private void onPlayerRightClick(ServerPlayer player, ItemStack itemStack) {
-        Item item = itemStack.getItem();
+    private void onPlayerRightClick(PlayerInteractEvent.RightClickItem event) {
+        Item item = event.getItemStack().getItem();
 
         if (item == Items.COMPASS) {
-            if (!queue.contains(player)) {
-                queue.add(player);
-                player.sendSystemMessage(Component.nullToEmpty("Vous avez rejoint la file d'attente !"));
+            if (!queue.contains(event.getEntity())) {
+                queue.add((ServerPlayer) event.getEntity());
+                event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous avez rejoint la file d'attente !"));
             } else {
-                player.sendSystemMessage(Component.nullToEmpty("Vous êtes déjà dans la file d'attente."));
+                event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous êtes déjà dans la file d'attente."));
             }
         }
     }
 
-    private void onServerTick(MinecraftServer server) {
+    @SubscribeEvent
+    private void onServerTick(ServerTickEvent.Post event) {
+        event.getServer().getPlayerList().getPlayers().forEach(player -> {
+            if (!player.getInventory().contains(new ItemStack(Items.COMPASS))) {
+                player.getInventory().add(new ItemStack(Items.COMPASS));
+            }
+        });
+        
         if (queue.size() >= 2) {
             Arena availableArena = getAvailableArena();
             if (availableArena != null) {
