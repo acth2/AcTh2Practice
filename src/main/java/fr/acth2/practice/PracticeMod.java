@@ -1,22 +1,21 @@
 package fr.acth2.practice;
 
-
+import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.utils.References;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.server.ServerLifecycleEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.slf4j.Logger;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -30,6 +29,8 @@ public class PracticeMod {
     // METTEZ VOTRE SPAWN
     private static final BlockPos SPAWN_POS = new BlockPos(0, 100, 0);
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     public PracticeMod() {
         NeoForge.EVENT_BUS.register(this);
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
@@ -39,7 +40,7 @@ public class PracticeMod {
 
     @SubscribeEvent
     private void onServerStarting(ServerStartingEvent server) {
-        System.out.println("ACTH2PRACTICE MOD STARTED");
+        LOGGER.info("acth2practice is ON");
     }
 
     @SubscribeEvent
@@ -63,7 +64,7 @@ public class PracticeMod {
                 player.getInventory().add(new ItemStack(Items.COMPASS));
             }
         });
-        
+
         if (queue.size() >= 2) {
             Arena availableArena = getAvailableArena();
             if (availableArena != null) {
