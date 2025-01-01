@@ -3,6 +3,7 @@ package fr.acth2.practice;
 import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.utils.References;
+import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
