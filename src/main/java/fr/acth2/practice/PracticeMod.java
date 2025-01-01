@@ -95,7 +95,7 @@ public class PracticeMod {
                 if (loser != null) {
                     ServerPlayer winner = arena.getOpponent(loser);
                     if (winner != null) {
-                        winner.sendSystemMessage(Component.nullToEmpty("Vous avez gagné le duel !"));
+                        PlayerLogger.plog("Vous avez gagné le duel !", winner);
                     }
                     resetPlayers(loser, winner, arena);
                 }
@@ -125,8 +125,8 @@ public class PracticeMod {
         player1.teleportTo(arena.getPosition1().getX(), arena.getPosition1().getY(), arena.getPosition1().getZ());
         player2.teleportTo(arena.getPosition2().getX(), arena.getPosition2().getY(), arena.getPosition2().getZ());
 
-        player1.sendSystemMessage(Component.nullToEmpty("Combat commencé contre " + player2.getName().getString() + " !"));
-        player2.sendSystemMessage(Component.nullToEmpty("Combat commencé contre " + player1.getName().getString() + " !"));
+        PlayerLogger.plog("Combat commencé contre ", player1, player2.getName());
+        PlayerLogger.plog("Combat commencé contre ", player2, player1.getName());
     }
 
     private void giveEquipment(ServerPlayer player) {
