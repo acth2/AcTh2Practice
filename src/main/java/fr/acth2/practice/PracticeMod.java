@@ -39,6 +39,16 @@ public class PracticeMod {
     }
 
     @SubscribeEvent
+    private void onPlayerQuit(ServerTickEvent.Post event) {
+        for (ServerPlayer players : queue) {
+            if (players.hasDisconnected()) {
+                queue.remove(players);
+                LOGGER.info(players.getName() + " disconnected and removed from the queue");
+            }
+        }
+    }
+
+    @SubscribeEvent
     private void onServerStarting(ServerStartingEvent server) {
         LOGGER.info("acth2practice is ON");
     }
