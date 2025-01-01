@@ -60,9 +60,9 @@ public class PracticeMod {
         if (item == Items.IRON_SWORD) {
             if (!queue.contains(event.getEntity())) {
                 queue.add((ServerPlayer) event.getEntity());
-                event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous avez rejoint la file d'attente !"));
+                PlayerLogger.plog("Vous avez rejoint la file d'attente !", (ServerPlayer) event.getEntity());
             } else {
-                event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous n'êtes plus dans la file d'attente !"));
+                PlayerLogger.perr("Vous n'êtes plus dans la file d'attente !", (ServerPlayer) event.getEntity());
                 queue.remove((ServerPlayer) event.getEntity());
             }
         }
