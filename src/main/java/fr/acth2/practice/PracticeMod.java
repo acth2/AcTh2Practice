@@ -5,7 +5,7 @@ import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
+import net.minecraft.core.Holder; 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
