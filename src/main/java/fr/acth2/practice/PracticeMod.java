@@ -69,7 +69,9 @@ public class PracticeMod {
 
     @SubscribeEvent
     private void onServerStarting(ServerStartingEvent server) {
-        LOGGER.info("acth2practice is ON");
+        LOGGER.info("------------ " + References.NAME);
+        LOGGER.info("- The mod is ON");
+        LOGGER.info("- Version: " + References.VERSION);
     }
 
     @SubscribeEvent
