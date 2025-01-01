@@ -136,40 +136,19 @@ public class PracticeMod {
 
     private void giveEquipment(ServerPlayer player) {
         ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
-        boots.enchant((Holder<Enchantment>) Enchantments.UNBREAKING, 3);
-        boots.enchant((Holder<Enchantment>) Enchantments.PROTECTION, 4);
-
         ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
-        leggings.enchant((Holder<Enchantment>) Enchantments.UNBREAKING, 3);
-        leggings.enchant((Holder<Enchantment>) Enchantments.PROTECTION, 4);
-
         ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
-        chestplate.enchant((Holder<Enchantment>) Enchantments.UNBREAKING, 3);
-        chestplate.enchant((Holder<Enchantment>) Enchantments.PROTECTION, 4);
-
         ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-        helmet.enchant((Holder<Enchantment>) Enchantments.UNBREAKING, 3); 
-        helmet.enchant((Holder<Enchantment>) Enchantments.PROTECTION, 4);
-
+        
         player.getInventory().armor.set(0, boots);
         player.getInventory().armor.set(1, leggings);
         player.getInventory().armor.set(2, chestplate);
         player.getInventory().armor.set(3, helmet);
 
         ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
-        sword.enchant((Holder<Enchantment>) Enchantments.SHARPNESS, 5);
         player.getInventory().add(sword);
-
-        for (int i = 0; i < 33; i++) {
-            player.getInventory().add(new ItemStack(Items.SPLASH_POTION, 1));
-        }
-
-        player.getInventory().add(new ItemStack((ItemLike) Potions.LONG_SWIFTNESS, 2));
-        player.getInventory().add(new ItemStack((ItemLike) Potions.LONG_FIRE_RESISTANCE, 1));
-
         player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
     }
-
 
     private void resetPlayers(ServerPlayer loser, ServerPlayer winner, Arena arena) {
         loser.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
