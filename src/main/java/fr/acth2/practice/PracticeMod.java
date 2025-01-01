@@ -148,7 +148,7 @@ public class PracticeMod {
         chestplate.enchant((Holder<Enchantment>) Enchantments.PROTECTION, 4);
 
         ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-        helmet.enchant((Holder<Enchantment>) Enchantments.UNBREAKING, 3);
+        helmet.enchant((Holder<Enchantment>) Enchantments.UNBREAKING, 3); 
         helmet.enchant((Holder<Enchantment>) Enchantments.PROTECTION, 4);
 
         player.getInventory().armor.set(0, boots);
