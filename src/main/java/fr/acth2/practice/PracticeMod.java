@@ -72,6 +72,7 @@ public class PracticeMod {
         LOGGER.info("------------ " + References.NAME);
         LOGGER.info("- The mod is ON");
         LOGGER.info("- Version: " + References.VERSION);
+        LOGGER.info("--------------------------");
     }
 
     @SubscribeEvent
