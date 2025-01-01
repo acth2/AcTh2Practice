@@ -163,8 +163,8 @@ public class PracticeMod {
         player1.teleportTo(arena.getPosition1().getX(), arena.getPosition1().getY(), arena.getPosition1().getZ());
         player2.teleportTo(arena.getPosition2().getX(), arena.getPosition2().getY(), arena.getPosition2().getZ());
 
-        PlayerLogger.plog("Combat commencé contre ", player1, player2.getName());
-        PlayerLogger.plog("Combat commencé contre ", player2, player1.getName());
+        PlayerLogger.plog("Combat commencé contre ", player1, player2.getName().getString());
+        PlayerLogger.plog("Combat commencé contre ", player2, player1.getName().getString());
     }
 
     private void giveEquipment(ServerPlayer player) {
