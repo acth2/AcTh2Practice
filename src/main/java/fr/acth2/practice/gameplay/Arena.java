@@ -10,8 +10,7 @@ import java.util.Set;
  * AIDE :
  * Vous devez construire l'arene sur votre monde et la définir en utilisant cette classe dans la classe Principal (PracticeMod)
  * Tout simplement copiez la ligne code 26 et répétez la en méttant VOS informations !
- *
- *
+ * 
  */
 
 public class Arena {
@@ -19,6 +18,8 @@ public class Arena {
     private final BlockPos position1;
     private final BlockPos position2;
     private final Set<ServerPlayer> players;
+    private ServerPlayer classPlayer1;
+    private ServerPlayer classPlayer2;
     private boolean isOccupied;
 
     public Arena(String name, BlockPos position1, BlockPos position2) {
@@ -50,8 +51,19 @@ public class Arena {
     }
 
     public void addPlayers(ServerPlayer player1, ServerPlayer player2) {
+        classPlayer1 = player1;
+        classPlayer2 = player2;
+
         players.add(player1);
         players.add(player2);
+    }
+
+    public ServerPlayer getPlayer1() {
+        return classPlayer1;
+    }
+
+    public ServerPlayer getPlayer2() {
+        return classPlayer2;
     }
 
     public void clearPlayers() {
