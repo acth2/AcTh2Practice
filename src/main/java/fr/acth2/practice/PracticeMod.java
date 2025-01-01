@@ -58,7 +58,7 @@ public class PracticeMod {
     private void onPlayerRightClick(PlayerInteractEvent.RightClickItem event) {
         Item item = event.getItemStack().getItem();
 
-        if (item == Items.IRON_SWORD) {
+        if (item == Items.CLOCK) {
             if (!queue.contains(event.getEntity())) {
                 queue.add((ServerPlayer) event.getEntity());
                 PlayerLogger.plog("Vous avez rejoint la file d'attente !", (ServerPlayer) event.getEntity());
@@ -72,8 +72,8 @@ public class PracticeMod {
     @SubscribeEvent
     private void onServerTick(ServerTickEvent.Post event) {
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if (!player.getInventory().contains(new ItemStack(Items.IRON_SWORD))) {
-                player.getInventory().add(new ItemStack(Items.IRON_SWORD));
+            if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
+                player.getInventory().add(new ItemStack(Items.CLOCK));
             }
         });
 
