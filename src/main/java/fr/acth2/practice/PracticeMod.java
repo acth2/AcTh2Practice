@@ -62,7 +62,8 @@ public class PracticeMod {
                 queue.add((ServerPlayer) event.getEntity());
                 event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous avez rejoint la file d'attente !"));
             } else {
-                event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous êtes déjà dans la file d'attente."));
+                event.getEntity().sendSystemMessage(Component.nullToEmpty("Vous n'êtes plus dans la file d'attente !"));
+                queue.remove((ServerPlayer) event.getEntity());
             }
         }
     }
