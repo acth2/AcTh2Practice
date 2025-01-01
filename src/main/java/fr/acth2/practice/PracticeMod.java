@@ -7,7 +7,10 @@ import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -31,10 +34,10 @@ import java.util.Queue;
 @Mod(References.MODID)
 public class PracticeMod {
     private static final Queue<ServerPlayer> queue = new ArrayDeque<>();
-    private static final List<Arena> arenas = new ArrayList<>();
     private static final Queue<String> disconnectedPlayers = new ArrayDeque<>();
+    private static final List<Arena> arenas = new ArrayList<>();
     // METTEZ VOTRE SPAWN
-    private static final BlockPos SPAWN_POS = new BlockPos(0, 100, 0);
+    private static final BlockPos SPAWN_POS = new BlockPos(0, 101, 0);
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -43,6 +46,15 @@ public class PracticeMod {
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
         arenas.add(new Arena("Arena1", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
         //arenas.add(new Arena("Arena2", new BlockPos(1100, 100, 1100), new BlockPos(1110, 100, 1110)));
+    }
+
+
+    public void clearItemsOnGround(ServerLevel world) {
+        for (Entity entity : world.getEntities().getAll()) {
+            if (entity instanceof ItemEntity) {
+                entity.discard();
+            }
+        }
     }
 
     @SubscribeEvent
@@ -76,6 +88,8 @@ public class PracticeMod {
     }
     @SubscribeEvent
     private void onServerTick(ServerTickEvent.Post event) {
+        clearItemsOnGround(event.getServer().overworld());
+
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
             if(disconnectedPlayers.contains(player.getName().getString())) {
                 PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
