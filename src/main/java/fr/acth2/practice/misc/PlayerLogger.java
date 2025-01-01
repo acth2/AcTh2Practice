@@ -20,6 +20,7 @@ public class PlayerLogger {
             baseMessage.append(variableComponent);
         }
 
+        prefix.append(baseMessage);
         sp.sendSystemMessage(prefix);
     }
 
