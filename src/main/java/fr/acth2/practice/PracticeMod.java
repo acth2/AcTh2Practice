@@ -32,7 +32,7 @@ import java.util.Queue;
 public class PracticeMod {
     private static final Queue<ServerPlayer> queue = new ArrayDeque<>();
     private static final List<Arena> arenas = new ArrayList<>();
-    private static final List<ServerPlayer> disconnectedPlayers = new ArrayList<>();
+    private static final Queue<String> disconnectedPlayers = new ArrayDeque<>();
     // METTEZ VOTRE SPAWN
     private static final BlockPos SPAWN_POS = new BlockPos(0, 100, 0);
 
@@ -74,16 +74,15 @@ public class PracticeMod {
             }
         }
     }
-
     @SubscribeEvent
     private void onServerTick(ServerTickEvent.Post event) {
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if(disconnectedPlayers.contains(player)) {
+            if(disconnectedPlayers.contains(player.getName().getString())) {
                 PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
-                player.getInventory().clearContent();
-                disconnectedPlayers.remove(player);
+                resetPlayer(player, null, false);
+                disconnectedPlayers.remove(player.getName().getString());
             }
-            
+
             if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 player.getInventory().add(new ItemStack(Items.CLOCK));
             }
@@ -114,14 +113,14 @@ public class PracticeMod {
                 }
 
                 if(arena.getPlayer1().hasDisconnected()) {
-                    resetPlayer(arena.getPlayer2(), arena);
-                    disconnectedPlayers.add(arena.getPlayer1());
+                    resetPlayer(arena.getPlayer2(), arena, true);
+                    disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer2());
                 }
 
                 if(arena.getPlayer2().hasDisconnected()) {
-                    resetPlayer(arena.getPlayer1(), arena);
-                    disconnectedPlayers.add(arena.getPlayer2());
+                    resetPlayer(arena.getPlayer1(), arena, true);
+                    disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer1());
                 }
             }
@@ -182,11 +181,13 @@ public class PracticeMod {
         arena.setOccupied(false);
     }
 
-    private void resetPlayer(ServerPlayer player2reset, Arena arena) {
+    private void resetPlayer(ServerPlayer player2reset, Arena arena, boolean doClean) {
         player2reset.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
         player2reset.getInventory().clearContent();
 
-        arena.clearPlayers();
-        arena.setOccupied(false);
+        if(doClean) {
+            arena.clearPlayers();
+            arena.setOccupied(false);
+        }
     }
 }
