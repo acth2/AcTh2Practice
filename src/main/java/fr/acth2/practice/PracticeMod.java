@@ -32,6 +32,7 @@ import java.util.Queue;
 public class PracticeMod {
     private static final Queue<ServerPlayer> queue = new ArrayDeque<>();
     private static final List<Arena> arenas = new ArrayList<>();
+    private static final List<ServerPlayer> disconnectedPlayers = new ArrayList<>();
     // METTEZ VOTRE SPAWN
     private static final BlockPos SPAWN_POS = new BlockPos(0, 100, 0);
 
@@ -40,8 +41,8 @@ public class PracticeMod {
     public PracticeMod() {
         NeoForge.EVENT_BUS.register(this);
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
-        arenas.add(new Arena("Arena1", new BlockPos(1000, 100, 1000), new BlockPos(1010, 100, 1010)));
-        arenas.add(new Arena("Arena2", new BlockPos(1100, 100, 1100), new BlockPos(1110, 100, 1110)));
+        arenas.add(new Arena("Arena1", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
+        //arenas.add(new Arena("Arena2", new BlockPos(1100, 100, 1100), new BlockPos(1110, 100, 1110)));
     }
 
     @SubscribeEvent
@@ -77,6 +78,12 @@ public class PracticeMod {
     @SubscribeEvent
     private void onServerTick(ServerTickEvent.Post event) {
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
+            if(disconnectedPlayers.contains(player)) {
+                PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
+                player.getInventory().clearContent();
+                disconnectedPlayers.remove(player);
+            }
+            
             if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 player.getInventory().add(new ItemStack(Items.CLOCK));
             }
@@ -101,8 +108,21 @@ public class PracticeMod {
                     ServerPlayer winner = arena.getOpponent(loser);
                     if (winner != null) {
                         PlayerLogger.plog("Vous avez gagné le duel !", winner);
+                        PlayerLogger.perr("Vous avez perdu le duel !", loser);
+                        resetPlayers(loser, winner, arena);
                     }
-                    resetPlayers(loser, winner, arena);
+                }
+
+                if(arena.getPlayer1().hasDisconnected()) {
+                    resetPlayer(arena.getPlayer2(), arena);
+                    disconnectedPlayers.add(arena.getPlayer1());
+                    PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer2());
+                }
+
+                if(arena.getPlayer2().hasDisconnected()) {
+                    resetPlayer(arena.getPlayer1(), arena);
+                    disconnectedPlayers.add(arena.getPlayer2());
+                    PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer1());
                 }
             }
         });
@@ -139,7 +159,7 @@ public class PracticeMod {
         ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
         ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
         ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-        
+
         player.getInventory().armor.set(0, boots);
         player.getInventory().armor.set(1, leggings);
         player.getInventory().armor.set(2, chestplate);
@@ -150,12 +170,21 @@ public class PracticeMod {
         player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
     }
 
+
     private void resetPlayers(ServerPlayer loser, ServerPlayer winner, Arena arena) {
         loser.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
         winner.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
 
         loser.getInventory().clearContent();
         winner.getInventory().clearContent();
+
+        arena.clearPlayers();
+        arena.setOccupied(false);
+    }
+
+    private void resetPlayer(ServerPlayer player2reset, Arena arena) {
+        player2reset.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
+        player2reset.getInventory().clearContent();
 
         arena.clearPlayers();
         arena.setOccupied(false);
