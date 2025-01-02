@@ -100,6 +100,11 @@ public class PracticeMod {
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
         PlayerLogger.plog("Bienvenue sur ", player, "Arch-JspFrr");
+        
+        if(disconnectedPlayers.contains(player.getName().getString())) {
+            PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
+            disconnectedPlayers.remove(player.getName().getString());
+        }
         resetPlayer(player, null, false);
     }
 
@@ -108,12 +113,6 @@ public class PracticeMod {
         clearItemsOnGround(event.getServer().overworld());
 
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if(disconnectedPlayers.contains(player.getName().getString())) {
-                PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
-                resetPlayer(player, null, false);
-                disconnectedPlayers.remove(player.getName().getString());
-            }
-
             if (!player.getInventory().contains(new ItemStack(Items.CLOCK)) && !getAvailableArena().hasPlayer(player)) {
                 player.getInventory().add(new ItemStack(Items.CLOCK));
             }
