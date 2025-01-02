@@ -147,12 +147,16 @@ public class PracticeMod {
                     resetPlayer(arena.getPlayer2(), arena, true);
                     disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer2());
+                    disconnectedPlayers.remove(arena.getPlayer2().getName().getString());
+                    arena.getPlayer2().getInventory().add(new ItemStack(Items.CLOCK));
                 }
 
                 if(arena.getPlayer2().hasDisconnected()) {
                     resetPlayer(arena.getPlayer1(), arena, true);
                     disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer1());
+                    disconnectedPlayers.remove(arena.getPlayer1().getName().getString());
+                    arena.getPlayer1().getInventory().add(new ItemStack(Items.CLOCK));
                 }
             }
         });
