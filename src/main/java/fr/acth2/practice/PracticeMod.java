@@ -1,11 +1,13 @@
 package fr.acth2.practice;
 
+import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.gui.KitSelectionMenu;
+import fr.acth2.practice.misc.PotionFiller;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.commands.CommandSourceStack;
@@ -71,7 +73,7 @@ public class PracticeMod {
     public PracticeMod() {
         NeoForge.EVENT_BUS.register(this);
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
-        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 101, 2103)));
+        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 100, 2103)));
         arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
     }
 
@@ -295,12 +297,59 @@ public class PracticeMod {
             player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
         }
 
-        //NODEBUFF A VENIR
         if (id == 1) {
-            ItemStack sword = new ItemStack(Items.WOODEN_SWORD);
+            ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
             applyEnchant(player, sword, "sharpness", 5);
+            applyEnchant(player, sword, "fire_aspect", 2);
+
+            ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
+            applyEnchant(player, boots, "protection", 4);
+            applyEnchant(player, boots, "unbreaking", 3);
+
+            ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
+            applyEnchant(player, leggings, "protection", 4);
+            applyEnchant(player, leggings, "unbreaking", 3);
+
+            ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
+            applyEnchant(player, chestplate, "protection", 4);
+            applyEnchant(player, chestplate, "unbreaking", 3);
+
+            ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
+            applyEnchant(player, helmet, "protection", 4);
+            applyEnchant(player, helmet, "unbreaking", 3);
+
+            player.getInventory().armor.set(0, boots);
+            player.getInventory().armor.set(1, leggings);
+            player.getInventory().armor.set(2, chestplate);
+            player.getInventory().armor.set(3, helmet);
 
             player.getInventory().add(sword);
+            player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
+
+            givePotions(player, "swiftness", 0);
+            givePotions(player, "swiftness", 0);
+            givePotions(player, "fire_resistance", 0);
+            PotionFiller.fill(player);
+        }
+    }
+
+    public static void givePotions(ServerPlayer player, String effect, int splash) {
+        boolean splash2bool = splash != 0;
+        String command = String.format("give %s %s[minecraft:potion_contents=%s]",
+                player.getName().getString(),
+                "minecraft:" + (splash2bool ? "splash_potion" : "potion"),
+                effect);
+
+        System.out.println(command);
+        MinecraftServer server = player.getServer();
+        if (server != null) {
+            CommandSourceStack serverSource = server.createCommandSourceStack();
+            try {
+                var parseResults = server.getCommands().getDispatcher().parse(new StringReader(command), serverSource);
+                server.getCommands().getDispatcher().execute(parseResults);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -312,8 +361,6 @@ public class PracticeMod {
 
     private void resetPlayer(ServerPlayer player2reset, Arena arena, boolean doClean) {
         player2reset.removeAllEffects();
-        player2reset.setHealth(20.0F);
-
         player2reset.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
         player2reset.getInventory().clearContent();
         noDebuffQueue.remove(player2reset);
