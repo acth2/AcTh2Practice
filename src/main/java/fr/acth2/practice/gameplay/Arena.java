@@ -71,7 +71,7 @@ public class Arena {
     }
 
     public boolean hasPlayer(ServerPlayer player) {
-        return players.contains(player);
+        return player == getPlayer1() || player == getPlayer2();
     }
 
     public ServerPlayer getOpponent(ServerPlayer player) {
