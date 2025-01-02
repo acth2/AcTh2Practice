@@ -1,9 +1,11 @@
 package fr.acth2.practice;
 
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
+import fr.acth2.practice.gui.KitSelectionMenu;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.commands.CommandSourceStack;
@@ -16,14 +18,24 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -32,6 +44,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -41,12 +54,13 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 @Mod(References.MODID)
 public class PracticeMod {
-    private static final Queue<ServerPlayer> queue = new ArrayDeque<>();
+    private static final Queue<ServerPlayer> diamondQueue = new ArrayDeque<>();
+    private static final Queue<ServerPlayer> noDebuffQueue = new ArrayDeque<>();
+
+    private static final Queue<ServerPlayer> inFightList = new ArrayDeque<>();
     private static final Queue<String> disconnectedPlayers = new ArrayDeque<>();
     private static final List<Arena> arenas = new ArrayList<>();
     // METTEZ VOTRE SPAWN
@@ -61,7 +75,6 @@ public class PracticeMod {
         arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
     }
 
-
     public void clearItemsOnGround(ServerLevel world) {
         for (Entity entity : world.getEntities().getAll()) {
             if (entity instanceof ItemEntity) {
@@ -72,9 +85,16 @@ public class PracticeMod {
 
     @SubscribeEvent
     private void onPlayerQuit(ServerTickEvent.Post event) {
-        for (ServerPlayer players : queue) {
+        for (ServerPlayer players : noDebuffQueue) {
             if (players.hasDisconnected()) {
-                queue.remove(players);
+                noDebuffQueue.remove(players);
+                LOGGER.info(players.getName() + " disconnected and removed from the queue");
+            }
+        }
+
+        for (ServerPlayer players : diamondQueue) {
+            if (players.hasDisconnected()) {
+                diamondQueue.remove(players);
                 LOGGER.info(players.getName() + " disconnected and removed from the queue");
             }
         }
@@ -92,13 +112,31 @@ public class PracticeMod {
     private void onPlayerRightClick(PlayerInteractEvent.RightClickItem event) {
         Item item = event.getItemStack().getItem();
 
-        if (item == Items.CLOCK) {
-            if (!queue.contains(event.getEntity())) {
-                queue.add((ServerPlayer) event.getEntity());
-                PlayerLogger.plog("Vous avez rejoint la file d'attente !", (ServerPlayer) event.getEntity());
+        if (item == Items.DIAMOND) {
+            if (!diamondQueue.contains(event.getEntity())) {
+                if (!noDebuffQueue.contains(event.getEntity())) {
+                    diamondQueue.add((ServerPlayer) event.getEntity());
+                    PlayerLogger.plog("Vous avez rejoint la file d'attente ", (ServerPlayer) event.getEntity(), "[DIAMOND] !");
+                } else {
+                    PlayerLogger.perr("Vous êtes deja dans une file d'attente..", (ServerPlayer) event.getEntity());
+                }
             } else {
-                PlayerLogger.perr("Vous n'êtes plus dans la file d'attente !", (ServerPlayer) event.getEntity());
-                queue.remove((ServerPlayer) event.getEntity());
+                PlayerLogger.perr("Vous n'êtes plus dans la file d'attente ", (ServerPlayer) event.getEntity(), "[DIAMOND] !");
+                diamondQueue.remove((ServerPlayer) event.getEntity());
+            }
+        }
+
+        if (item == Items.CLOCK) {
+            if (!noDebuffQueue.contains(event.getEntity())) {
+                if (!diamondQueue.contains(event.getEntity())) {
+                    noDebuffQueue.add((ServerPlayer) event.getEntity());
+                    PlayerLogger.plog("Vous avez rejoint la file d'attente ", (ServerPlayer) event.getEntity(), "[NODEBUFF] !");
+                } else {
+                    PlayerLogger.perr("Vous êtes deja dans une file d'attente..", (ServerPlayer) event.getEntity());
+                }
+            } else {
+                PlayerLogger.perr("Vous n'êtes plus dans la file d'attente ", (ServerPlayer) event.getEntity(), "[NODEBUFF] !");
+                noDebuffQueue.remove((ServerPlayer) event.getEntity());
             }
         }
     }
@@ -120,19 +158,34 @@ public class PracticeMod {
         clearItemsOnGround(event.getServer().overworld());
 
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if (!player.getInventory().contains(new ItemStack(Items.CLOCK)) && !getAvailableArena().hasPlayer(player)) {
-                player.getInventory().add(new ItemStack(Items.CLOCK));
+            if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
+                if (!inFightList.contains(player)) {
+                    player.getInventory().add(new ItemStack(Items.CLOCK));
+                    player.getInventory().add(new ItemStack(Items.DIAMOND));
+                }
             }
         });
 
-        if (queue.size() >= 2) {
+        if (diamondQueue.size() >= 2) {
             Arena availableArena = getAvailableArena();
             if (availableArena != null) {
-                ServerPlayer player1 = queue.poll();
-                ServerPlayer player2 = queue.poll();
+                ServerPlayer player1 = diamondQueue.poll();
+                ServerPlayer player2 = diamondQueue.poll();
 
                 if (player1 != null && player2 != null) {
-                    startDuel(player1, player2, availableArena);
+                    startDuel(player1, player2, availableArena, 0);
+                }
+            }
+        }
+
+        if (noDebuffQueue.size() >= 2) {
+            Arena availableArena = getAvailableArena();
+            if (availableArena != null) {
+                ServerPlayer player1 = noDebuffQueue.poll();
+                ServerPlayer player2 = noDebuffQueue.poll();
+
+                if (player1 != null && player2 != null) {
+                    startDuel(player1, player2, availableArena, 1);
                 }
             }
         }
@@ -155,6 +208,7 @@ public class PracticeMod {
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer2());
                     disconnectedPlayers.remove(arena.getPlayer2().getName().getString());
                     arena.getPlayer2().getInventory().add(new ItemStack(Items.CLOCK));
+                    arena.getPlayer2().getInventory().add(new ItemStack(Items.DIAMOND));
                 }
 
                 if(arena.getPlayer2().hasDisconnected()) {
@@ -162,7 +216,7 @@ public class PracticeMod {
                     disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer1());
                     disconnectedPlayers.remove(arena.getPlayer1().getName().getString());
-                    arena.getPlayer1().getInventory().add(new ItemStack(Items.CLOCK));
+                    arena.getPlayer1().getInventory().add(new ItemStack(Items.DIAMOND));
                 }
             }
         });
@@ -177,21 +231,24 @@ public class PracticeMod {
         return null;
     }
 
-    private void startDuel(ServerPlayer player1, ServerPlayer player2, Arena arena) {
+    private void startDuel(ServerPlayer player1, ServerPlayer player2, Arena arena, int id) {
         arena.setOccupied(true);
         arena.addPlayers(player1, player2);
 
         player1.getInventory().clearContent();
         player2.getInventory().clearContent();
 
-        giveEquipment(player1);
-        giveEquipment(player2);
+        giveEquipment(player1, id);
+        giveEquipment(player2, id);
 
         player1.teleportTo(arena.getPosition1().getX(), arena.getPosition1().getY(), arena.getPosition1().getZ());
         player2.teleportTo(arena.getPosition2().getX(), arena.getPosition2().getY(), arena.getPosition2().getZ());
 
         PlayerLogger.plog("Combat commencé contre ", player1, player2.getName().getString());
         PlayerLogger.plog("Combat commencé contre ", player2, player1.getName().getString());
+
+        inFightList.add(player1);
+        inFightList.add(player2);
     }
 
     private static void applyEnchant(ServerPlayer player, ItemStack itemStack, String enchantment, int level) {
@@ -210,48 +267,59 @@ public class PracticeMod {
         }
     }
 
-    private void giveEquipment(ServerPlayer player) {
-        ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
-        applyEnchant(player, boots, "protection", 4);
+    private void giveEquipment(ServerPlayer player, int id) {
+        //DIAMOND
+        if (id == 0) {
+            ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
+            applyEnchant(player, boots, "protection", 4);
 
-        ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
-        applyEnchant(player, leggings, "protection", 4);
+            ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
+            applyEnchant(player, leggings, "protection", 4);
 
-        ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
-        applyEnchant(player, chestplate, "protection", 4);
+            ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
+            applyEnchant(player, chestplate, "protection", 4);
 
-        ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-        applyEnchant(player, helmet, "protection", 4);
+            ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
+            applyEnchant(player, helmet, "protection", 4);
 
-        player.getInventory().armor.set(0, boots);
-        player.getInventory().armor.set(1, leggings);
-        player.getInventory().armor.set(2, chestplate);
-        player.getInventory().armor.set(3, helmet);
+            player.getInventory().armor.set(0, boots);
+            player.getInventory().armor.set(1, leggings);
+            player.getInventory().armor.set(2, chestplate);
+            player.getInventory().armor.set(3, helmet);
 
-        ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
-        applyEnchant(player, sword, "sharpness", 5);
+            ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
+            applyEnchant(player, sword, "sharpness", 5);
 
-        player.getInventory().add(sword);
-        player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
-        player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
+            player.getInventory().add(sword);
+            player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
+            player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
+        }
+
+        //NODEBUFF A VENIR
+        if (id == 1) {
+            ItemStack sword = new ItemStack(Items.WOODEN_SWORD);
+            applyEnchant(player, sword, "sharpness", 5);
+
+            player.getInventory().add(sword);
+        }
     }
 
 
     private void resetPlayers(ServerPlayer loser, ServerPlayer winner, Arena arena) {
-        loser.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
-        winner.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
-
-        loser.getInventory().clearContent();
-        winner.getInventory().clearContent();
-
-        arena.clearPlayers();
-        arena.setOccupied(false);
+        resetPlayer(loser, arena, true);
+        resetPlayer(winner, arena, true);
     }
 
     private void resetPlayer(ServerPlayer player2reset, Arena arena, boolean doClean) {
+        player2reset.removeAllEffects();
+        player2reset.setHealth(20.0F);
+
         player2reset.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
         player2reset.getInventory().clearContent();
+        noDebuffQueue.remove(player2reset);
+        diamondQueue.remove(player2reset);
 
+        inFightList.remove(player2reset);
         if(doClean) {
             arena.clearPlayers();
             arena.setOccupied(false);
