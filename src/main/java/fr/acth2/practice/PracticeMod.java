@@ -1,19 +1,27 @@
 package fr.acth2.practice;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.HolderOwner;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerPlayerConnection;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
@@ -21,8 +29,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -32,10 +40,9 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 @Mod(References.MODID)
 public class PracticeMod {
@@ -100,7 +107,7 @@ public class PracticeMod {
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
         PlayerLogger.plog("Bienvenue sur ", player, "Arch-JspFrr");
-        
+
         if(disconnectedPlayers.contains(player.getName().getString())) {
             PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
             disconnectedPlayers.remove(player.getName().getString());
@@ -187,11 +194,34 @@ public class PracticeMod {
         PlayerLogger.plog("Combat commencé contre ", player2, player1.getName().getString());
     }
 
+    private static void applyEnchant(ServerPlayer player, ItemStack itemStack, String enchantment, int level) {
+        player.setItemInHand(player.getUsedItemHand(), itemStack);
+        String command = String.format("enchant %s %s %d", player.getName().getString(), enchantment, level);
+
+        MinecraftServer server = player.getServer();
+        if (server != null) {
+            CommandSourceStack serverSource = server.createCommandSourceStack();
+            try {
+                var parseResults = server.getCommands().getDispatcher().parse(new StringReader(command), serverSource);
+                server.getCommands().getDispatcher().execute(parseResults);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void giveEquipment(ServerPlayer player) {
         ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
+        applyEnchant(player, boots, "protection", 4);
+
         ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
+        applyEnchant(player, leggings, "protection", 4);
+
         ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
+        applyEnchant(player, chestplate, "protection", 4);
+
         ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
+        applyEnchant(player, helmet, "protection", 4);
 
         player.getInventory().armor.set(0, boots);
         player.getInventory().armor.set(1, leggings);
@@ -199,7 +229,10 @@ public class PracticeMod {
         player.getInventory().armor.set(3, helmet);
 
         ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
+        applyEnchant(player, sword, "sharpness", 5);
+
         player.getInventory().add(sword);
+        player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
         player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
     }
 
