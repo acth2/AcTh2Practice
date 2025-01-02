@@ -5,8 +5,12 @@ import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder; 
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -44,8 +48,8 @@ public class PracticeMod {
     public PracticeMod() {
         NeoForge.EVENT_BUS.register(this);
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
-        arenas.add(new Arena("Arena1", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
-        //arenas.add(new Arena("Arena2", new BlockPos(1100, 100, 1100), new BlockPos(1110, 100, 1110)));
+        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 100, 2103)));
+        arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
     }
 
 
@@ -89,6 +93,7 @@ public class PracticeMod {
             }
         }
     }
+
     @SubscribeEvent
     private void onServerTick(ServerTickEvent.Post event) {
         clearItemsOnGround(event.getServer().overworld());
@@ -100,7 +105,7 @@ public class PracticeMod {
                 disconnectedPlayers.remove(player.getName().getString());
             }
 
-            if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
+            if (!player.getInventory().contains(new ItemStack(Items.CLOCK)) && !getAvailableArena().hasPlayer(player)) {
                 player.getInventory().add(new ItemStack(Items.CLOCK));
             }
         });
