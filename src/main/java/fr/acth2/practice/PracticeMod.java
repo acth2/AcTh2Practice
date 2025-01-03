@@ -30,6 +30,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -70,19 +71,19 @@ public class PracticeMod {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public PracticeMod() {
-        NeoForge.EVENT_BUS.register(this);
-        // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
-        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 100, 2103)));
-        arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
-    }
-
     public void clearItemsOnGround(ServerLevel world) {
         for (Entity entity : world.getEntities().getAll()) {
             if (entity instanceof ItemEntity) {
                 entity.discard();
             }
         }
+    }
+
+    public PracticeMod() {
+        NeoForge.EVENT_BUS.register(this);
+        // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
+        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 100, 2103)));
+        arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
     }
 
     @SubscribeEvent
@@ -201,6 +202,7 @@ public class PracticeMod {
                         PlayerLogger.plog("Vous avez gagné le duel !", winner);
                         PlayerLogger.perr("Vous avez perdu le duel !", loser);
                         resetPlayers(loser, winner, arena);
+                        resetPlayer(loser, null, false);
                     }
                 }
 
@@ -271,61 +273,33 @@ public class PracticeMod {
 
     private void giveEquipment(ServerPlayer player, int id) {
         //DIAMOND
-        if (id == 0) {
-            ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
-            applyEnchant(player, boots, "protection", 4);
+        ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
+        applyEnchant(player, boots, "protection", 4);
 
-            ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
-            applyEnchant(player, leggings, "protection", 4);
+        ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
+        applyEnchant(player, leggings, "protection", 4);
 
-            ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
-            applyEnchant(player, chestplate, "protection", 4);
+        ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
+        applyEnchant(player, chestplate, "protection", 4);
 
-            ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-            applyEnchant(player, helmet, "protection", 4);
+        ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
+        applyEnchant(player, helmet, "protection", 4);
 
-            player.getInventory().armor.set(0, boots);
-            player.getInventory().armor.set(1, leggings);
-            player.getInventory().armor.set(2, chestplate);
-            player.getInventory().armor.set(3, helmet);
+        player.getInventory().armor.set(0, boots);
+        player.getInventory().armor.set(1, leggings);
+        player.getInventory().armor.set(2, chestplate);
+        player.getInventory().armor.set(3, helmet);
 
-            ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
-            applyEnchant(player, sword, "sharpness", 5);
-
-            player.getInventory().add(sword);
-            player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
-            player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
-        }
-
-        if (id == 1) {
-            ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
-            applyEnchant(player, sword, "sharpness", 5);
+        ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
+        applyEnchant(player, sword, "sharpness", 5);
+        if(id == 1) {
             applyEnchant(player, sword, "fire_aspect", 2);
-
-            ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
-            applyEnchant(player, boots, "protection", 4);
-            applyEnchant(player, boots, "unbreaking", 3);
-
-            ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
-            applyEnchant(player, leggings, "protection", 4);
-            applyEnchant(player, leggings, "unbreaking", 3);
-
-            ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
-            applyEnchant(player, chestplate, "protection", 4);
-            applyEnchant(player, chestplate, "unbreaking", 3);
-
-            ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-            applyEnchant(player, helmet, "protection", 4);
-            applyEnchant(player, helmet, "unbreaking", 3);
-
-            player.getInventory().armor.set(0, boots);
-            player.getInventory().armor.set(1, leggings);
-            player.getInventory().armor.set(2, chestplate);
-            player.getInventory().armor.set(3, helmet);
-
-            player.getInventory().add(sword);
-            player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
-
+        }
+        player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
+        player.getInventory().add(sword);
+        if (id == 0) {
+            player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
+        } else if (id == 1) {
             givePotions(player, "swiftness", 0);
             givePotions(player, "swiftness", 0);
             givePotions(player, "fire_resistance", 0);
