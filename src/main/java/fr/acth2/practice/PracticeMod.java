@@ -163,6 +163,7 @@ public class PracticeMod {
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
             if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 if (!inFightList.contains(player)) {
+                    player.getInventory().clearContent();
                     CustomPayloads.giveNodebuffClock(player);
                     player.getInventory().add(new ItemStack(Items.DIAMOND));
                     player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 4));
@@ -226,8 +227,24 @@ public class PracticeMod {
                 if (loser != null) {
                     ServerPlayer winner = arena.getOpponent(loser);
                     if (winner != null) {
-                        PlayerLogger.plog("Vous avez gagné le duel !", winner);
-                        PlayerLogger.perr("Vous avez perdu le duel !", loser);
+
+                        // gagnat msg
+
+                        PlayerLogger.plog("============== ", winner, "[A2P]");
+                        PlayerLogger.plog("Gagnant: ", winner, winner.getName().getString() + " (vous)");
+                        PlayerLogger.plog("Perdant: ", winner, loser.getName().getString());
+                        PlayerLogger.plog("-------------------", winner);
+                        PlayerLogger.plog("Le gagnant n'avais plus que: ", winner, (int) winner.getHealth() + "HP / 20HP");
+                        PlayerLogger.plog("============== ", winner, "[A2P]");
+
+                        // perdant msg
+
+                        PlayerLogger.perr("============== ", loser, "[A2P]");
+                        PlayerLogger.perr("Gagnant: ", loser, winner.getName().getString());
+                        PlayerLogger.perr("Perdant: ", loser, loser.getName().getString() + " (vous)");
+                        PlayerLogger.perr("-------------------", loser);
+                        PlayerLogger.perr("Le gagnant n'avais plus que: ", loser, (int) winner.getHealth() + "HP / 20HP");
+                        PlayerLogger.perr("============== ", loser, "[A2P]");
                         resetPlayers(loser, winner, arena);
                         resetPlayer(loser, null, false);
                     }
