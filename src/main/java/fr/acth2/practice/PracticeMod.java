@@ -1,55 +1,17 @@
 package fr.acth2.practice;
 
-import com.mojang.brigadier.ParseResults;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.gameplay.CustomPayloads;
-import fr.acth2.practice.gui.KitSelectionMenu;
 import fr.acth2.practice.misc.PotionFiller;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderOwner;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ServerChatEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -59,7 +21,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+
+// POUR CONFIGURER LE MOD ALLEZ DANS LA CLASSE REFERENCES !!
 
 @Mod(References.MODID)
 public class PracticeMod {
@@ -72,18 +35,12 @@ public class PracticeMod {
     private static final Queue<ServerPlayer> inFightList = new ArrayDeque<>();
     private static final Queue<String> disconnectedPlayers = new ArrayDeque<>();
     private static final List<Arena> arenas = new ArrayList<>();
-    // METTEZ VOTRE SPAWN
-    private static final BlockPos SPAWN_POS = new BlockPos(0, 101, 0);
+    private static final Logger LOGGER = LogUtils.getLogger();    public PracticeMod() {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final AtomicBoolean atomicRepetitionAvoider = new AtomicBoolean(true);
-
-    public PracticeMod() {
         NeoForge.EVENT_BUS.register(this);
-        // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
-        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 101, 2103)));
-        arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
-        arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
+        // LES ARENES A ENREGISTRER
+        arenas.add(References.kh3sa);
+        arenas.add(References.blue0);
     }
 
     @SubscribeEvent
@@ -175,9 +132,7 @@ public class PracticeMod {
                     String message = chatEvent.getMessage().getString().toLowerCase();
                     ServerPlayer sender = chatEvent.getPlayer();
 
-                    List<String> bannedWords = List.of("loser", "idiot", "dumbass", "kys", "fuck you", "nigger", "nigga", "fdp", "tg", "stfu", "ntm", "negro");
-
-                    boolean containsBannedWord = bannedWords.stream().anyMatch(message::contains);
+                    boolean containsBannedWord = References.BANNED_WORDS.stream().anyMatch(message::contains);
 
                     if (containsBannedWord) {
                         chatEvent.setCanceled(true);
@@ -344,7 +299,7 @@ public class PracticeMod {
 
     private void resetPlayer(ServerPlayer player2reset, Arena arena, boolean doClean) {
         player2reset.removeAllEffects();
-        player2reset.teleportTo(SPAWN_POS.getX(), SPAWN_POS.getY(), SPAWN_POS.getZ());
+        player2reset.teleportTo(References.SPAWN_POS.getX(), References.SPAWN_POS.getY(), References.SPAWN_POS.getZ());
         player2reset.getInventory().clearContent();
         noDebuffQueue.remove(player2reset);
         diamondQueue.remove(player2reset);
