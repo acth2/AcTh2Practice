@@ -162,7 +162,7 @@ public class PracticeMod {
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
             if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 if (!inFightList.contains(player)) {
-                    player.getInventory().add(new ItemStack(Items.CLOCK));
+                    giveNodebuffClock(player);
                     player.getInventory().add(new ItemStack(Items.DIAMOND));
                 }
             }
@@ -339,6 +339,23 @@ public class PracticeMod {
                 player.getName().getString(),
                 "minecraft:" + (splash2bool ? "splash_potion" : "potion"),
                 effect);
+
+        System.out.println(command);
+        MinecraftServer server = player.getServer();
+        if (server != null) {
+            CommandSourceStack serverSource = server.createCommandSourceStack();
+            try {
+                var parseResults = server.getCommands().getDispatcher().parse(new StringReader(command), serverSource);
+                server.getCommands().getDispatcher().execute(parseResults);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void giveNodebuffClock(ServerPlayer player) {
+        String command = String.format("give %s minecraft:clock[minecraft:item_name=NoDebuff]",
+                player.getName().getString());
 
         System.out.println(command);
         MinecraftServer server = player.getServer();
