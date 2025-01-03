@@ -1,6 +1,6 @@
 package fr.acth2.practice;
 
-import com.mojang.logging.LogUtils;
+import com.mojang.logging.LogUtils; 
 import fr.acth2.practice.gameplay.Arena;
 import fr.acth2.practice.gameplay.CustomPayloads;
 import fr.acth2.practice.misc.PotionFiller;
