@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.datafixers.util.Either;
 import com.mojang.logging.LogUtils;
 import fr.acth2.practice.gameplay.Arena;
+import fr.acth2.practice.gameplay.CustomPayloads;
 import fr.acth2.practice.gui.KitSelectionMenu;
 import fr.acth2.practice.misc.PotionFiller;
 import fr.acth2.practice.utils.References;
@@ -47,6 +48,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -57,11 +59,15 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mod(References.MODID)
 public class PracticeMod {
     private static final Queue<ServerPlayer> diamondQueue = new ArrayDeque<>();
     private static final Queue<ServerPlayer> noDebuffQueue = new ArrayDeque<>();
+
+    private static final List<String> toxicList = new ArrayList<>();
+    private static final List<String> mutedList = new ArrayList<>();
 
     private static final Queue<ServerPlayer> inFightList = new ArrayDeque<>();
     private static final Queue<String> disconnectedPlayers = new ArrayDeque<>();
@@ -70,19 +76,13 @@ public class PracticeMod {
     private static final BlockPos SPAWN_POS = new BlockPos(0, 101, 0);
 
     private static final Logger LOGGER = LogUtils.getLogger();
-
-    public void clearItemsOnGround(ServerLevel world) {
-        for (Entity entity : world.getEntities().getAll()) {
-            if (entity instanceof ItemEntity) {
-                entity.discard();
-            }
-        }
-    }
+    private static final AtomicBoolean atomicRepetitionAvoider = new AtomicBoolean(true);
 
     public PracticeMod() {
         NeoForge.EVENT_BUS.register(this);
         // LES ARENES QUE LE MOD VA RECONNAITRE EN TANT QUE TEL
-        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 100, 2103)));
+        arenas.add(new Arena("kh3sa", new BlockPos(2140, 101, 2103), new BlockPos(2089, 101, 2103)));
+        arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
         arenas.add(new Arena("blue0", new BlockPos(1063, 101, 1025), new BlockPos(985, 101, 1025)));
     }
 
@@ -158,15 +158,42 @@ public class PracticeMod {
 
     @SubscribeEvent
     private void onServerTick(ServerTickEvent.Post event) {
-        clearItemsOnGround(event.getServer().overworld());
+        CustomPayloads.clearItemsOnGround(event.getServer().overworld());
 
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
             if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 if (!inFightList.contains(player)) {
-                    giveNodebuffClock(player);
+                    CustomPayloads.giveNodebuffClock(player);
                     player.getInventory().add(new ItemStack(Items.DIAMOND));
+                    player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 4));
                 }
             }
+
+            NeoForge.EVENT_BUS.addListener((ServerChatEvent chatEvent) -> {
+                if (!mutedList.contains(chatEvent.getPlayer().getName().getString())) {
+                    String message = chatEvent.getMessage().getString().toLowerCase();
+                    ServerPlayer sender = chatEvent.getPlayer();
+
+                    List<String> bannedWords = List.of("loser", "idiot", "dumbass", "kys", "fuck you", "nigger", "nigga", "fdp", "tg", "stfu", "ntm", "negro");
+
+                    boolean containsBannedWord = bannedWords.stream().anyMatch(message::contains);
+
+                    if (containsBannedWord) {
+                        chatEvent.setCanceled(true);
+
+                        if (!toxicList.contains(sender.getName().getString())) {
+                            PlayerLogger.perr("Votre message est toxic le prochain avertissement sera suivi d'un ", sender, "mute!");
+                            toxicList.add(player.getName().getString());
+                        } else {
+                            PlayerLogger.perr("Vous etes", sender, " mute!");
+                            mutedList.add(sender.getName().getString());
+                        }
+                    }
+                } else {
+                    chatEvent.setCanceled(true);
+                    PlayerLogger.perr("Vous ne pouvez plus envoyé de messages..", chatEvent.getPlayer());
+                }
+            });
         });
 
         if (diamondQueue.size() >= 2) {
@@ -220,6 +247,7 @@ public class PracticeMod {
                     disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer1());
                     disconnectedPlayers.remove(arena.getPlayer1().getName().getString());
+                    arena.getPlayer2().getInventory().add(new ItemStack(Items.CLOCK));
                     arena.getPlayer1().getInventory().add(new ItemStack(Items.DIAMOND));
                 }
             }
@@ -255,95 +283,42 @@ public class PracticeMod {
         inFightList.add(player2);
     }
 
-    private static void applyEnchant(ServerPlayer player, ItemStack itemStack, String enchantment, int level) {
-        player.setItemInHand(player.getUsedItemHand(), itemStack);
-        String command = String.format("enchant %s %s %d", player.getName().getString(), enchantment, level);
-
-        MinecraftServer server = player.getServer();
-        if (server != null) {
-            CommandSourceStack serverSource = server.createCommandSourceStack();
-            try {
-                var parseResults = server.getCommands().getDispatcher().parse(new StringReader(command), serverSource);
-                server.getCommands().getDispatcher().execute(parseResults);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     private void giveEquipment(ServerPlayer player, int id) {
         //DIAMOND
         ItemStack boots = new ItemStack(Items.DIAMOND_BOOTS);
-        applyEnchant(player, boots, "protection", 4);
+        CustomPayloads.applyEnchant(player, boots, "protection", 4);
 
         ItemStack leggings = new ItemStack(Items.DIAMOND_LEGGINGS);
-        applyEnchant(player, leggings, "protection", 4);
+        CustomPayloads.applyEnchant(player, leggings, "protection", 4);
 
         ItemStack chestplate = new ItemStack(Items.DIAMOND_CHESTPLATE);
-        applyEnchant(player, chestplate, "protection", 4);
+        CustomPayloads.applyEnchant(player, chestplate, "protection", 4);
 
         ItemStack helmet = new ItemStack(Items.DIAMOND_HELMET);
-        applyEnchant(player, helmet, "protection", 4);
+        CustomPayloads.applyEnchant(player, helmet, "protection", 4);
 
         player.getInventory().armor.set(0, boots);
         player.getInventory().armor.set(1, leggings);
         player.getInventory().armor.set(2, chestplate);
         player.getInventory().armor.set(3, helmet);
 
+        //NoDebuff & Common
         ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
-        applyEnchant(player, sword, "sharpness", 5);
+        CustomPayloads.applyEnchant(player, sword, "sharpness", 5);
         if(id == 1) {
-            applyEnchant(player, sword, "fire_aspect", 2);
+            CustomPayloads.applyEnchant(player, sword, "fire_aspect", 2);
         }
         player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
         player.getInventory().add(sword);
         if (id == 0) {
             player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
         } else if (id == 1) {
-            givePotions(player, "swiftness", 0);
-            givePotions(player, "swiftness", 0);
-            givePotions(player, "fire_resistance", 0);
+            CustomPayloads.givePotions(player, "swiftness", 0);
+            CustomPayloads.givePotions(player, "swiftness", 0);
+            CustomPayloads.givePotions(player, "fire_resistance", 0);
             PotionFiller.fill(player);
         }
     }
-
-    public static void givePotions(ServerPlayer player, String effect, int splash) {
-        boolean splash2bool = splash != 0;
-        String command = String.format("give %s %s[minecraft:potion_contents=%s]",
-                player.getName().getString(),
-                "minecraft:" + (splash2bool ? "splash_potion" : "potion"),
-                effect);
-
-        System.out.println(command);
-        MinecraftServer server = player.getServer();
-        if (server != null) {
-            CommandSourceStack serverSource = server.createCommandSourceStack();
-            try {
-                var parseResults = server.getCommands().getDispatcher().parse(new StringReader(command), serverSource);
-                server.getCommands().getDispatcher().execute(parseResults);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static void giveNodebuffClock(ServerPlayer player) {
-        String command = String.format("give %s minecraft:clock[minecraft:item_name=NoDebuff]",
-                player.getName().getString());
-
-        System.out.println(command);
-        MinecraftServer server = player.getServer();
-        if (server != null) {
-            CommandSourceStack serverSource = server.createCommandSourceStack();
-            try {
-                var parseResults = server.getCommands().getDispatcher().parse(new StringReader(command), serverSource);
-                server.getCommands().getDispatcher().execute(parseResults);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 
     private void resetPlayers(ServerPlayer loser, ServerPlayer winner, Arena arena) {
         resetPlayer(loser, arena, true);
