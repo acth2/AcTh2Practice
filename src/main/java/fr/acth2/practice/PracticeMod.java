@@ -127,7 +127,7 @@ public class PracticeMod {
                 }
             }
 
-            if (!player.getInventory().contains(new ItemStack(Items.CLOCK)) && !player.getInventory().contains(new ItemStack(Items.DIAMOND))) {
+            if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 if (!inFightList.contains(player)) {
                     player.getInventory().clearContent();
                     CustomPayloads.giveNodebuffClock(player);
@@ -194,21 +194,21 @@ public class PracticeMod {
 
                         // gagnat msg
 
-                        PlayerLogger.plog("============== ", winner, "[A2P]");
+                        PlayerLogger.plog("============== ", winner, References.PREFIX_SUFFIX);
                         PlayerLogger.plog("Gagnant: ", winner, winner.getName().getString() + " (vous)");
                         PlayerLogger.plog("Perdant: ", winner, loser.getName().getString());
                         PlayerLogger.plog("-------------------", winner);
                         PlayerLogger.plog("Le gagnant n'avais plus que: ", winner, (int) winner.getHealth() + "HP / 20HP");
-                        PlayerLogger.plog("============== ", winner, "[A2P]");
+                        PlayerLogger.plog("============== ", winner, References.PREFIX_SUFFIX);
 
                         // perdant msg
 
-                        PlayerLogger.perr("============== ", loser, "[A2P]");
+                        PlayerLogger.perr("============== ", loser, References.PREFIX_SUFFIX);
                         PlayerLogger.perr("Gagnant: ", loser, winner.getName().getString());
                         PlayerLogger.perr("Perdant: ", loser, loser.getName().getString() + " (vous)");
                         PlayerLogger.perr("-------------------", loser);
                         PlayerLogger.perr("Le gagnant n'avais plus que: ", loser, (int) winner.getHealth() + "HP / 20HP");
-                        PlayerLogger.perr("============== ", loser, "[A2P]");
+                        PlayerLogger.perr("============== ", loser, References.PREFIX_SUFFIX);
                         resetPlayers(loser, winner, arena);
                         resetPlayer(loser, null, false);
                     }

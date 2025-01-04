@@ -8,7 +8,7 @@ import java.util.List;
 public class References {
     public static final String MODID = "acth2practice";
     public static final String NAME = "AcTh2Practice";
-    public static final String VERSION = "4.2.5";
+    public static final String VERSION = "4.3.5";
 
     //  CHANGEZ PAR VOS VALEURS ICI:
 
@@ -26,4 +26,5 @@ public class References {
     public static List<String> BANNED_WORDS = List.of("loser", "idiot", "dumbass", "kys", "fuck you", "nigger", "nigga", "fdp", "tg", "stfu", "ntm", "negro");
 
     public static String SERVER_NAME = "AcTh2Practice";
+    public static String PREFIX_SUFFIX = "[A2P]";
 }
