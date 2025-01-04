@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import java.util.*;
 
 // POUR CONFIGURER LE MOD ALLEZ DANS LA CLASSE REFERENCES !!
-// TEST POUR INTELLIJ IDEA GIT PLUGIN
 
 @Mod(References.MODID)
 public class PracticeMod {
@@ -120,6 +119,15 @@ public class PracticeMod {
 
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
             if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
+                if (!inFightList.contains(player)) {
+                    player.getInventory().clearContent();
+                    CustomPayloads.giveNodebuffClock(player);
+                    player.getInventory().add(new ItemStack(Items.DIAMOND));
+                    player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 4));
+                }
+            }
+
+            if (!player.getInventory().contains(new ItemStack(Items.CLOCK)) && !player.getInventory().contains(new ItemStack(Items.DIAMOND))) {
                 if (!inFightList.contains(player)) {
                     player.getInventory().clearContent();
                     CustomPayloads.giveNodebuffClock(player);
