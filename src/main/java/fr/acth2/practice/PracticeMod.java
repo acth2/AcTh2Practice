@@ -104,7 +104,7 @@ public class PracticeMod {
     @SubscribeEvent
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        PlayerLogger.plog("Bienvenue sur ", player, "Arch-JspFrr");
+        PlayerLogger.plog("Bienvenue sur ", player, References.SERVER_NAME);
 
         if(disconnectedPlayers.contains(player.getName().getString())) {
             PlayerLogger.perr("Veuillez évité de vous déconnecté", player);
@@ -288,6 +288,7 @@ public class PracticeMod {
         CustomPayloads.applyEnchant(player, sword, "sharpness", 5);
         if(id == 1) {
             CustomPayloads.applyEnchant(player, sword, "fire_aspect", 2);
+            player.getInventory().add(new ItemStack(Items.ENDER_PEARL, 16));
         }
         player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
         player.getInventory().add(sword);

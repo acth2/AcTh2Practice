@@ -40,6 +40,5 @@ public class PotionFiller {
         CustomPayloads.givePotions(player, "strong_healing", 1);
         CustomPayloads.givePotions(player, "strong_healing", 1);
         CustomPayloads.givePotions(player, "strong_healing", 1);
-        CustomPayloads.givePotions(player, "strong_healing", 1);
     }
 }

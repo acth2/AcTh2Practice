@@ -24,4 +24,6 @@ public class References {
 
     // LISTE DES MOTS INTERDITS
     public static List<String> BANNED_WORDS = List.of("loser", "idiot", "dumbass", "kys", "fuck you", "nigger", "nigga", "fdp", "tg", "stfu", "ntm", "negro");
+
+    public static String SERVER_NAME = "AcTh2Practice";
 }
