@@ -1,10 +1,10 @@
-package fr.acth2.cosmetics;
+package fr.acth2.practice;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import fr.acth2.cosmetics.utils.References;
+import fr.acth2.practice.utils.References;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
