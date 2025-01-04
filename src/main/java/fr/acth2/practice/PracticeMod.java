@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import java.util.*;
 
 // POUR CONFIGURER LE MOD ALLEZ DANS LA CLASSE REFERENCES !!
-// TEST POUR INTELLIJ IDEA GIT PLUGIN1&
+// TEST POUR INTELLIJ IDEA GIT PLUGIN1
 
 @Mod(References.MODID)
 public class PracticeMod {
