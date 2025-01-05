@@ -118,16 +118,12 @@ public class PracticeMod {
         CustomPayloads.clearItemsOnGround(event.getServer().overworld());
 
         event.getServer().getPlayerList().getPlayers().forEach(player -> {
-            if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
-                if (!inFightList.contains(player)) {
-                    player.getInventory().clearContent();
-                    CustomPayloads.giveNodebuffClock(player);
-                    player.getInventory().add(new ItemStack(Items.DIAMOND));
-                    player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 4));
-                }
+            if (!inFightList.contains(player)) {
+                player.setHealth(20.0F);
+                player.clearFire();
             }
 
-            if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
+            if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 if (!inFightList.contains(player)) {
                     player.getInventory().clearContent();
                     CustomPayloads.giveNodebuffClock(player);

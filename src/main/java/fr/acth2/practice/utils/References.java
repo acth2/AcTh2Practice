@@ -6,6 +6,8 @@ import net.minecraft.core.BlockPos;
 import java.util.List;
 
 public class References {
+
+    // PREFERABLE DE NE PAS MODIFIER
     public static final String MODID = "acth2practice";
     public static final String NAME = "AcTh2Practice";
     public static final String VERSION = "4.3.5";
