@@ -29,4 +29,8 @@ public class References {
 
     public static String SERVER_NAME = "AcTh2Practice";
     public static String PREFIX_SUFFIX = "[A2P]";
+
+    // ENABLE THE LEGACY KNOCKBACK DISABLE IF YOU ALREADY HAVE SOMETHING THAT DO IT
+
+    public static boolean ENABLE_LEGACY_MECHANISM = true;
 }

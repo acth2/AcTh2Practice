@@ -7,11 +7,16 @@ import fr.acth2.practice.misc.PotionFiller;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -111,6 +116,41 @@ public class PracticeMod {
             disconnectedPlayers.remove(player.getName().getString());
         }
         resetPlayer(player, null, false);
+    }
+
+    @SubscribeEvent
+    public void onLivingKnockBack(LivingKnockBackEvent event) {
+        if (References.ENABLE_LEGACY_MECHANISM) {
+            if (event.getEntity() instanceof net.minecraft.world.entity.player.Player) {
+                double multipler = 1.2d;
+
+                double originalStrength = event.getStrength();
+                double originalRatioX = event.getRatioX();
+                double originalRatioZ = event.getRatioZ();
+                double legacyStrength = originalStrength * multipler;
+
+                double legacyRatioX = originalRatioX * multipler;
+                double legacyRatioZ = originalRatioZ * multipler;
+
+                event.setStrength((float) legacyStrength);
+                event.setRatioX(legacyRatioX);
+                event.setRatioZ(legacyRatioZ);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPotionThrown(EntityJoinLevelEvent event) {
+        if (References.ENABLE_LEGACY_MECHANISM) {
+            Entity entity = event.getEntity();
+            if (entity instanceof ThrownPotion thrownPotion) {
+                Vec3 originalMotion = thrownPotion.getDeltaMovement();
+
+                double scaleFactor = 0.6;
+                Vec3 adjustedMotion = originalMotion.scale(scaleFactor);
+                thrownPotion.setDeltaMovement(adjustedMotion);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -283,7 +323,6 @@ public class PracticeMod {
         ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
         CustomPayloads.applyEnchant(player, sword, "sharpness", 5);
         if(id == 1) {
-            CustomPayloads.applyEnchant(player, sword, "fire_aspect", 2);
             player.getInventory().add(new ItemStack(Items.ENDER_PEARL, 16));
         }
         player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 64));
@@ -291,9 +330,8 @@ public class PracticeMod {
         if (id == 0) {
             player.getInventory().add(new ItemStack(Items.GOLDEN_APPLE, 5));
         } else if (id == 1) {
-            CustomPayloads.givePotions(player, "swiftness", 0);
-            CustomPayloads.givePotions(player, "swiftness", 0);
-            CustomPayloads.givePotions(player, "fire_resistance", 0);
+            CustomPayloads.givePotions(player, "strong_swiftness", 0);
+            CustomPayloads.givePotions(player, "strong_swiftness", 0);
             PotionFiller.fill(player);
         }
     }
