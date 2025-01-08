@@ -120,22 +120,30 @@ public class PracticeMod {
 
     @SubscribeEvent
     public void onLivingKnockBack(LivingKnockBackEvent event) {
-        if (References.ENABLE_LEGACY_MECHANISM) {
-            if (event.getEntity() instanceof net.minecraft.world.entity.player.Player) {
-                double multipler = 1.2d;
+        if (!References.ENABLE_LEGACY_MECHANISM) return;
 
-                double originalStrength = event.getStrength();
-                double originalRatioX = event.getRatioX();
-                double originalRatioZ = event.getRatioZ();
-                double legacyStrength = originalStrength * multipler;
+        if (event.getEntity() instanceof ServerPlayer player) {
+            double baseStrengthMultiplier = 1.2;
+            double baseRatioMultiplierX = 1.2;
+            double baseRatioMultiplierZ = 1.2;
 
-                double legacyRatioX = originalRatioX * multipler;
-                double legacyRatioZ = originalRatioZ * multipler;
-
-                event.setStrength((float) legacyStrength);
-                event.setRatioX(legacyRatioX);
-                event.setRatioZ(legacyRatioZ);
+            if (player.isSprinting()) {
+                baseStrengthMultiplier *= 0.9;
+                baseRatioMultiplierX *= 0.9;
+                baseRatioMultiplierZ *= 0.9;
             }
+
+            double originalStrength = event.getStrength();
+            double originalRatioX = event.getRatioX();
+            double originalRatioZ = event.getRatioZ();
+
+            double legacyStrength = originalStrength * baseStrengthMultiplier;
+            double legacyRatioX = originalRatioX * baseRatioMultiplierX;
+            double legacyRatioZ = originalRatioZ * baseRatioMultiplierZ;
+
+            event.setStrength((float) legacyStrength);
+            event.setRatioX(legacyRatioX);
+            event.setRatioZ(legacyRatioZ);
         }
     }
 
@@ -146,8 +154,14 @@ public class PracticeMod {
             if (entity instanceof ThrownPotion thrownPotion) {
                 Vec3 originalMotion = thrownPotion.getDeltaMovement();
 
-                double scaleFactor = 0.6;
-                Vec3 adjustedMotion = originalMotion.scale(scaleFactor);
+                double verticalScaleFactor = 0.6;
+
+                Vec3 adjustedMotion = new Vec3(
+                        originalMotion.x  * verticalScaleFactor,
+                        originalMotion.y  * verticalScaleFactor,
+                        originalMotion.z  * verticalScaleFactor
+                );
+
                 thrownPotion.setDeltaMovement(adjustedMotion);
             }
         }
