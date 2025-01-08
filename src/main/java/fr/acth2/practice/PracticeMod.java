@@ -6,12 +6,18 @@ import fr.acth2.practice.gameplay.CustomPayloads;
 import fr.acth2.practice.misc.PotionFiller;
 import fr.acth2.practice.utils.References;
 import fr.acth2.practice.misc.PlayerLogger;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ServerChatEvent;
@@ -71,39 +77,6 @@ public class PracticeMod {
         LOGGER.info("- The mod is ON");
         LOGGER.info("- Version: " + References.VERSION);
         LOGGER.info("--------------------------");
-    }
-
-    @SubscribeEvent
-    private void onPlayerRightClick(PlayerInteractEvent.RightClickItem event) {
-        Item item = event.getItemStack().getItem();
-
-        if (item == Items.DIAMOND) {
-            if (!diamondQueue.contains(event.getEntity())) {
-                if (!noDebuffQueue.contains(event.getEntity())) {
-                    diamondQueue.add((ServerPlayer) event.getEntity());
-                    PlayerLogger.plog("Vous avez rejoint la file d'attente ", (ServerPlayer) event.getEntity(), "[DIAMOND] !");
-                } else {
-                    PlayerLogger.perr("Vous êtes deja dans une file d'attente..", (ServerPlayer) event.getEntity());
-                }
-            } else {
-                PlayerLogger.perr("Vous n'êtes plus dans la file d'attente ", (ServerPlayer) event.getEntity(), "[DIAMOND] !");
-                diamondQueue.remove((ServerPlayer) event.getEntity());
-            }
-        }
-
-        if (item == Items.CLOCK) {
-            if (!noDebuffQueue.contains(event.getEntity())) {
-                if (!diamondQueue.contains(event.getEntity())) {
-                    noDebuffQueue.add((ServerPlayer) event.getEntity());
-                    PlayerLogger.plog("Vous avez rejoint la file d'attente ", (ServerPlayer) event.getEntity(), "[NODEBUFF] !");
-                } else {
-                    PlayerLogger.perr("Vous êtes deja dans une file d'attente..", (ServerPlayer) event.getEntity());
-                }
-            } else {
-                PlayerLogger.perr("Vous n'êtes plus dans la file d'attente ", (ServerPlayer) event.getEntity(), "[NODEBUFF] !");
-                noDebuffQueue.remove((ServerPlayer) event.getEntity());
-            }
-        }
     }
 
     @SubscribeEvent
@@ -177,16 +150,49 @@ public class PracticeMod {
                 player.clearFire();
             }
 
-            if (!player.getInventory().contains(new ItemStack(Items.DIAMOND)) && !player.getInventory().contains(new ItemStack(Items.CLOCK))) {
+            if (!player.getInventory().contains(new ItemStack(Items.CLOCK))) {
                 if (!inFightList.contains(player)) {
                     player.getInventory().clearContent();
-                    CustomPayloads.giveNodebuffClock(player);
-                    player.getInventory().add(new ItemStack(Items.DIAMOND));
+                    CustomPayloads.giveMenuClock(player);
                     player.getInventory().add(new ItemStack(Items.COOKED_BEEF, 4));
                 }
             }
 
             NeoForge.EVENT_BUS.addListener((ServerChatEvent chatEvent) -> {
+                if (!noDebuffQueue.contains(chatEvent.getPlayer()) && !inFightList.contains(chatEvent.getPlayer())) {
+                    // DIAMOND
+                    boolean containsDiamondCommand = chatEvent.getMessage().contains(Component.literal(".diamond"));
+
+                    if (containsDiamondCommand) {
+                        if (!diamondQueue.contains(chatEvent.getPlayer())) {
+                            diamondQueue.add(chatEvent.getPlayer());
+                            PlayerLogger.plog("Vous avez rejoint la file d'attente ", chatEvent.getPlayer(), "[DIAMOND] !");
+                            chatEvent.setCanceled(true);
+                        } else {
+                            diamondQueue.remove(chatEvent.getPlayer());
+                            PlayerLogger.perr("Vous avez quitté la file d'attente ", chatEvent.getPlayer(), "[DIAMOND] !");
+                            chatEvent.setCanceled(true);
+                        }
+                    }
+                }
+
+                if (!diamondQueue.contains(chatEvent.getPlayer())  && !inFightList.contains(chatEvent.getPlayer())) {
+                    // NODEBUFF
+                    boolean containsNoDebuffCommand = chatEvent.getMessage().contains(Component.literal(".nodebuff"));
+
+                    if (containsNoDebuffCommand) {
+                        if(!noDebuffQueue.contains(chatEvent.getPlayer())) {
+                            noDebuffQueue.add(chatEvent.getPlayer());
+                            PlayerLogger.plog("Vous avez rejoint la file d'attente ", chatEvent.getPlayer(), "[NODEBUFF] !");
+                            chatEvent.setCanceled(true);
+                        } else {
+                            noDebuffQueue.remove(chatEvent.getPlayer());
+                            PlayerLogger.perr("Vous avez quitté la file d'attente ", chatEvent.getPlayer(), "[NODEBUFF] !");
+                            chatEvent.setCanceled(true);
+                        }
+                    }
+                }
+
                 if (!mutedList.contains(chatEvent.getPlayer().getName().getString())) {
                     String message = chatEvent.getMessage().getString().toLowerCase();
                     ServerPlayer sender = chatEvent.getPlayer();
@@ -269,8 +275,8 @@ public class PracticeMod {
                     disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer2());
                     disconnectedPlayers.remove(arena.getPlayer2().getName().getString());
-                    arena.getPlayer2().getInventory().add(new ItemStack(Items.CLOCK));
-                    arena.getPlayer2().getInventory().add(new ItemStack(Items.DIAMOND));
+                    CustomPayloads.giveMenuClock(arena.getPlayer2());
+                    CustomPayloads.giveMenuClock(arena.getPlayer1());
                 }
 
                 if(arena.getPlayer2().hasDisconnected()) {
@@ -278,8 +284,8 @@ public class PracticeMod {
                     disconnectedPlayers.add(arena.getPlayer1().getName().getString());
                     PlayerLogger.plog("Vous avez gagné par abandon", arena.getPlayer1());
                     disconnectedPlayers.remove(arena.getPlayer1().getName().getString());
-                    arena.getPlayer2().getInventory().add(new ItemStack(Items.CLOCK));
-                    arena.getPlayer1().getInventory().add(new ItemStack(Items.DIAMOND));
+                    CustomPayloads.giveMenuClock(arena.getPlayer2());
+                    CustomPayloads.giveMenuClock(arena.getPlayer1());
                 }
             }
         });
@@ -309,6 +315,12 @@ public class PracticeMod {
 
         PlayerLogger.plog("Combat commencé contre ", player1, player2.getName().getString());
         PlayerLogger.plog("Combat commencé contre ", player2, player1.getName().getString());
+
+        diamondQueue.remove(player1);
+        noDebuffQueue.remove(player1);
+
+        diamondQueue.remove(player2);
+        noDebuffQueue.remove(player2);
 
         inFightList.add(player1);
         inFightList.add(player2);

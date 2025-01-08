@@ -14,7 +14,7 @@ public class References {
 
     //  CHANGEZ PAR VOS VALEURS ICI:
 
-    public static final BlockPos SPAWN_POS = new BlockPos(0, 101, 0);
+    public static final BlockPos SPAWN_POS = new BlockPos(-4, 103, -27);
 
     /* Construction exemple d'une arene:                   POSITION DU JOUEUR 1   POSITION DU JOUEUR 2
     * public static Arena EXEMPLE_ARENA = new Arena("NOM", new BlockPos(0, 0, 0), new BlockPos(0, 0, 25));
@@ -29,6 +29,7 @@ public class References {
 
     public static String SERVER_NAME = "AcTh2Practice";
     public static String PREFIX_SUFFIX = "[A2P]";
+    public static List<String> COMMANDS = List.of(".nodebuff", ".diamond");
 
     // ENABLE THE LEGACY KNOCKBACK DISABLE IF YOU ALREADY HAVE SOMETHING THAT DO IT
 

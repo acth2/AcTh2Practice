@@ -30,8 +30,8 @@ public class CustomPayloads {
         }
     }
 
-    public static void giveNodebuffClock(ServerPlayer player) {
-        String command = String.format("give %s minecraft:clock[minecraft:item_name=NoDebuff]",
+    public static void giveMenuClock(ServerPlayer player) {
+        String command = String.format("give %s minecraft:clock[minecraft:item_name=Menu]",
                 player.getName().getString());
 
         System.out.println(command);
