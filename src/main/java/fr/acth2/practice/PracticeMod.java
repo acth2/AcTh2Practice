@@ -128,9 +128,9 @@ public class PracticeMod {
             double baseRatioMultiplierZ = 1.2;
 
             if (player.isSprinting()) {
-                baseStrengthMultiplier *= 0.9;
-                baseRatioMultiplierX *= 0.9;
-                baseRatioMultiplierZ *= 0.9;
+                baseStrengthMultiplier *= 0.7;
+                baseRatioMultiplierX *= 0.7;
+                baseRatioMultiplierZ *= 0.7;
             }
 
             double originalStrength = event.getStrength();
